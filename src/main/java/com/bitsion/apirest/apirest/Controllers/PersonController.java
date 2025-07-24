@@ -1,63 +1,99 @@
 package com.bitsion.apirest.apirest.Controllers;
 
-import java.util.List;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import com.bitsion.apirest.apirest.Entities.Person;
-import com.bitsion.apirest.apirest.Repositories.PersonRepository;
+import com.bitsion.apirest.apirest.Service.PersonService;
+import com.bitsion.apirest.apirest.dto.PersonDTO;
 
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-
-
-
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/persons")
 public class PersonController {
-    @Autowired
-    private PersonRepository personRepository;
+    private final PersonService personService;
 
-    @GetMapping
-    public List<Person> getMethodName() {
-        return personRepository.findAll();
+    public PersonController(PersonService personService) {
+        this.personService = personService;
     }
 
-    @GetMapping("/{id}")
-    public Person getPersonById(@PathVariable Long id) {
-        return personRepository.findById(id)
-        .orElseThrow(() -> new RuntimeException("No se encontro la persona con el id: " + id));
-
-    }
-    
     @PostMapping
-    public Person createPerson(@RequestBody Person person) {
-        return personRepository.save(person);
+    public ResponseEntity<PersonDTO> createPerson(@RequestBody PersonDTO personDTO) {
+        try {
+            Person person = convertToEntity(personDTO);
+            Person createdPerson = personService.createPerson(person);
+            return ResponseEntity.ok(convertToDTO(createdPerson));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(null);
+        }
     }
 
     @PutMapping("/{id}")
-    public Person putMethodName(@PathVariable Long id, @RequestBody Person deatilPerson) {
-        Person person = personRepository.findById(id)
-        .orElseThrow(() -> new RuntimeException("No se encontro la persona con el id: " + id));
-        person.setAge(deatilPerson.getAge());
-        person.setFullName(deatilPerson.getFullName());
-
-        return personRepository.save(person);
+    public ResponseEntity<PersonDTO> updatePerson(@PathVariable Long id, @RequestBody PersonDTO personDTO) {
+        try {
+            Person person = convertToEntity(personDTO);
+            Person updatedPerson = personService.updatePerson(id, person);
+            return ResponseEntity.ok(convertToDTO(updatedPerson));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(null);
+        }
     }
 
     @DeleteMapping("/{id}")
-    public String deletePerson(@PathVariable Long id) {
-        Person person = personRepository.findById(id)
-        .orElseThrow(() -> new RuntimeException("No se encontro la persona con el id: " + id));
+    public ResponseEntity<String> deletePerson(@PathVariable Long id) {
+        try {
+            personService.deletePerson(id);
+            return ResponseEntity.ok().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
 
-        personRepository.delete(person);
-        return "La persona con el id: " + id + " fue eliminado";
+    @GetMapping("/{id}")
+    public ResponseEntity<PersonDTO> getPersonById(@PathVariable Long id) {
+        try {
+            Person person = personService.getPersonById(id);
+            return ResponseEntity.ok(convertToDTO(person));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(null);
+        }
+    }
+
+    @GetMapping
+    public ResponseEntity<List<PersonDTO>> getAllPersons() {
+        List<Person> persons = personService.getAllPersons();
+        List<PersonDTO> personDTOs = persons.stream().map(this::convertToDTO).toList();
+        return ResponseEntity.ok(personDTOs);
+    }
+
+    private PersonDTO convertToDTO(Person person) {
+        PersonDTO dto = new PersonDTO();
+        dto.setId(person.getId());
+        dto.setFullName(person.getFullName());
+        dto.setDocumentation(person.getDocumentation());
+        dto.setAge(person.getAge());
+        dto.setGender(person.getGender());
+        dto.setIsActive(person.getIsActive());
+        dto.setDrives(person.getDrives());
+        dto.setWearsGlasses(person.getWearsGlasses());
+        dto.setIsDiabetic(person.getIsDiabetic());
+        dto.setOtherDisease(person.getOtherDisease());
+        return dto;
+    }
+
+    private Person convertToEntity(PersonDTO dto) {
+        Person person = new Person();
+        person.setId(dto.getId());
+        person.setFullName(dto.getFullName());
+        person.setDocumentation(dto.getDocumentation());
+        person.setAge(dto.getAge());
+        person.setGender(dto.getGender());
+        person.setIsActive(dto.getIsActive());
+        person.setDrives(dto.getDrives());
+        person.setWearsGlasses(dto.getWearsGlasses());
+        person.setIsDiabetic(dto.getIsDiabetic());
+        person.setOtherDisease(dto.getOtherDisease());
+        return person;
     }
 }
