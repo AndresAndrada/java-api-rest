@@ -1,10 +1,12 @@
 package com.bitsion.apirest.apirest.Entities;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -14,15 +16,18 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Entity
-@Table(name = "persons")
+@Table(name = "persons", uniqueConstraints = {@UniqueConstraint(columnNames = {"documentation"})})
 @Getter
 @Setter
 public class Person {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    
+    @Column(nullable = false)
     private String fullName;
     private String documentation;
+    
     @NotNull(message = "La edad es obligatoria")
     @Min(value = 18, message = "La edad debe ser mayor o igual a 18")
     @Max(value = 100, message = "La edad debe ser menor o igual a 100")
