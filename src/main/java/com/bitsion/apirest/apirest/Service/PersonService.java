@@ -1,12 +1,9 @@
 package com.bitsion.apirest.apirest.Service;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.bitsion.apirest.apirest.Entities.Person;
-import com.bitsion.apirest.apirest.Filters.JwtAuthenticationFilter;
 import com.bitsion.apirest.apirest.Repositories.PersonRepository;
 
 import jakarta.validation.ConstraintViolation;
@@ -16,7 +13,6 @@ import java.util.Set;
 
 @Service
 public class PersonService {
-        private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
     @Autowired
     private final PersonRepository personRepository;
@@ -28,14 +24,13 @@ public class PersonService {
     }
 
     public Person createPerson(Person person) {
-        // Validar datos
+
         Set<ConstraintViolation<Person>> violations = validator.validate(person);
         if (!violations.isEmpty()) {
             System.out.println(violations.iterator().next().getMessage());
             throw new IllegalArgumentException(violations.iterator().next().getMessage());
         }
-
-        // Verificar identificación única
+   
         if (personRepository.existsByDocumentation(person.getDocumentation())) {
             throw new IllegalArgumentException("La identificación ya está registrada");
         }
@@ -47,20 +42,16 @@ public class PersonService {
         Person existingPerson = personRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Persona no encontrada"));
 
-        // Validar datos actualizados
         Set<ConstraintViolation<Person>> violations = validator.validate(updatedPerson);
         if (!violations.isEmpty()) {
             throw new IllegalArgumentException(violations.iterator().next().getMessage());
         }
 
-        // Verificar identificación única (excluyendo la persona actual)
         if (!existingPerson.getDocumentation().equals(updatedPerson.getDocumentation()) &&
                 personRepository.existsByDocumentation(updatedPerson.getDocumentation())) {
             throw new IllegalArgumentException("La identificación ya está registrada");
         }
-        logger.warn("USER PUT: {}", existingPerson);
 
-        // Actualizar campos
         existingPerson.setFullName(updatedPerson.getFullName());
         existingPerson.setDocumentation(updatedPerson.getDocumentation());
         existingPerson.setAge(updatedPerson.getAge());

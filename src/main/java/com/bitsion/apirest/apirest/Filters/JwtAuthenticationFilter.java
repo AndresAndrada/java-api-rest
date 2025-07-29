@@ -25,7 +25,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
         String token = request.getHeader("Authorization");
-            logger.debug("Encabezado Authorization ANTES: {}");
+            logger.debug("Encabezado Authorization ANTES: {}", SECRET_KEY);
 
         if (token != null && token.startsWith("Bearer ")) {
             token = token.substring(7);
@@ -33,6 +33,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             try {
                 String username = Jwts.parser()
                         .setSigningKey("123456")
+                        // .setSigningKey(SECRET_KEY)
                         .parseClaimsJws(token)
                         .getBody()
                         .getSubject();
